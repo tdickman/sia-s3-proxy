@@ -127,8 +127,8 @@ class SiaStore(object):
                 matches.append(S3Item(
                     key,
                     # TODO: Fake md5 for now
-                    md5=b'098f6bcd4621d373cade4e832627b4f6',
-                    creation_date=file_details['createtime'][:-10] + '000Z',
+                    md5='098f6bcd4621d373cade4e832627b4f6',
+                    modified_date=file_details['modtime'][:-10] + '000Z',
                     size=file_details['filesize'],
                 ))
 
