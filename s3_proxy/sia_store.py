@@ -116,7 +116,10 @@ class SiaStore(object):
         while len(directories_to_walk) > 0:
             path = directories_to_walk.pop(-1)
 
-            results = self.sia.list(f'{self.base_dir}/{bucket.name}/{path}')
+            try:
+                results = self.sia.list(f'{self.base_dir}/{bucket.name}/{path}')
+            except Exception:
+                raise NoSuchKey()
 
             for file_details in results['files']:
                 key = file_details['siapath'].lstrip(f'{self.base_dir}/{bucket.name}')

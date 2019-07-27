@@ -196,9 +196,6 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     def set_mock_hostname(self, mock_hostname):
         self.mock_hostname = mock_hostname
 
-    def set_pull_from_aws(self, pull_from_aws):
-        self.pull_from_aws = pull_from_aws
-
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='A Mock-S3 server.')
@@ -213,16 +210,12 @@ def main(argv=sys.argv[1:]):
                         help='Defaults to s3/.')
     parser.add_argument('--sia-password', dest='sia_password', action='store',
                         help='Defaults to s3/.')
-    parser.add_argument('--pull-from-aws', dest='pull_from_aws', action='store_true',
-                        default=False,
-                        help='Pull non-existent keys from aws.')
     args = parser.parse_args()
 
     server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
     # server.set_file_store(FileStore(args.root))
     server.set_file_store(SiaStore(args.root, sia_password=args.sia_password))
     server.set_mock_hostname(args.hostname)
-    server.set_pull_from_aws(args.pull_from_aws)
 
     print('Starting server, use <Ctrl-C> to stop')
     server.serve_forever()
