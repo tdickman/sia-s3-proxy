@@ -55,7 +55,12 @@ class SiaStore(object):
         m = hashlib.md5()
         m.update(data)
         key = f'{self.base_dir}/{bucket.name}/{item_name}'
-        self.sia.upload_file(key, data)
+
+        # Treat 0 byte files as folders (since that's how s3 treats folders)
+        if len(data) == 0:
+            self.sia.create_folder(key)
+        else:
+            self.sia.upload_file(key, data)
         return S3Item(key, md5=m.hexdigest())
 
     def store_item(self, bucket, item_name, handler):
@@ -98,7 +103,7 @@ class SiaStore(object):
     def get_all_keys(self, bucket, **kwargs):
         max_keys = int(kwargs['max_keys'])
         prefix = kwargs.get('prefix')
-        delimiter = kwargs.get('delimiter')
+        delimiter = kwargs.get('delimiter', '')
         if delimiter not in set(['/', '']):
             raise Exception('Delimiter only supports / or `` currently')
 
