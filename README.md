@@ -16,6 +16,7 @@ pipenv install
 | SIA_HOST     | localhost |                                               |
 | SIA_PORT     | 9980      |                                               |
 | SIA_PASSWORD |           |                                               |
+| CACHE_DIR    | ./        | Where to save md5 cache                       |
 
 # Notes
 

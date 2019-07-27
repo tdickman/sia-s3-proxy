@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import sys
@@ -198,13 +197,13 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='A Mock-S3 server.')
     host = os.environ.get('HOST', 'localhost')
     port = int(os.environ.get('PORT', 10001))
     root = os.environ.get('ROOT', 's3')
     sia_password = os.environ.get('SIA_PASSWORD')
     sia_host = os.environ.get('SIA_HOST', 'localhost')
     sia_port = int(os.environ.get('SIA_PORT', 9980))
+    cache_dir = os.environ.get('CACHE_DIR', './').rstrip('/')
 
     server = ThreadedHTTPServer((host, port), S3Handler)
     # server.set_file_store(FileStore(args.root))
