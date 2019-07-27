@@ -2,6 +2,7 @@ from datetime import datetime
 import hashlib
 import io
 import pickledb
+import time
 
 from .errors import BucketNotEmpty, NoSuchBucket, NoSuchKey
 from .models import Bucket, BucketQuery, S3Item
@@ -65,6 +66,17 @@ class SiaStore(object):
         except:
             raise BucketNotEmpty
 
+    def _block_until_uploaded(self, bucket_name, item_name, timeout_seconds=60):
+        uploaded = False
+        attempts = 0
+        key = f'{self.base_dir}/{bucket_name}/{item_name}'
+        while not uploaded:
+            uploaded = self.sia.get_file_status(key)['available']
+            time.sleep(1)
+            attempts += 1
+            if attempts > timeout_seconds:
+                raise Exception("File failed to fully upload")
+
     def store_data(self, bucket, item_name, headers, data):
         m = hashlib.md5()
         m.update(data)
@@ -116,9 +128,9 @@ class SiaStore(object):
         path = f'{self.base_dir}/{bucket_name}/{item_name}'
         try:
             self.sia.delete_file(path)
+            self.md5_cache.rem(f'{bucket_name}/{item_name}')
         except Exception:
             self.sia.delete_folder(path)
-        self.md5_cache.delete(f'{bucket_name}/{item_name}')
 
     def get_all_keys(self, bucket, **kwargs):
         max_keys = int(kwargs['max_keys'])
