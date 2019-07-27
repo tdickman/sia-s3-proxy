@@ -85,7 +85,15 @@ class SiaStore(object):
         return item
 
     def delete_item(self, bucket_name, item_name):
-        self.sia.delete_file(f'{self.base_dir}/{bucket_name}/{item_name}')
+        # s3 doesn't differentiate between files and folders, but sia does. If
+        # file deletion fails, assume it was a folder, and delete that. Side
+        # note: If you create files and folders with the same name within Sia,
+        # this can cause weird situations in s3.
+        path = f'{self.base_dir}/{bucket_name}/{item_name}'
+        try:
+            self.sia.delete_file(path)
+        except Exception:
+            self.sia.delete_folder(path)
 
     def get_all_keys(self, bucket, **kwargs):
         max_keys = int(kwargs['max_keys'])
@@ -118,9 +126,7 @@ class SiaStore(object):
 
             for dir_details in results['directories']:
                 directory = dir_details['siapath']
-                print(directory)
                 path = directory.lstrip(f'{self.base_dir}/{bucket.name}') + '/'
-                print("path: " + path)
 
                 if path in walked_directories or path == '/':
                     continue

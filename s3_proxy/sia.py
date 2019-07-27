@@ -24,7 +24,6 @@ class Sia(object):
         return resp
 
     def list(self, path):
-        print(f'/renter/dir/{path}')
         return self._request(f'/renter/dir/{path}').json()
 
     def create_folder(self, path):
@@ -50,7 +49,10 @@ class Sia(object):
         return self._request(f'/renter/file/{path}').json()['file'], self._request(f'/renter/stream/{path}').content
 
     def delete_file(self, path):
-        return self._request(f'/renter/delete/{path}')
+        return self._request(
+            f'/renter/delete/{path}',
+            action='post'
+        )
 
 
 if __name__ == '__main__':
