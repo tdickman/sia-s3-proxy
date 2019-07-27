@@ -14,4 +14,4 @@ kwrite.set_contents_from_string('Nothing to see here, nested')
 kread = Key(b)
 kread.key = 'level1/level2/level3/nested.txt'
 content = kread.get_contents_as_string()
-print content
+print(content)

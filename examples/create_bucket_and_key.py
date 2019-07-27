@@ -14,4 +14,4 @@ kwrite.set_contents_from_string('Nothing to see here, hello')
 kread = Key(b)
 kread.key = 'hello.txt'
 content = kread.get_contents_as_string()
-print content
+print(content)

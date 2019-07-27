@@ -8,11 +8,11 @@ s3 = boto.connect_s3(host='localhost', port=10001, calling_format=OrdinaryCallin
 b = s3.create_bucket('mocking')
 
 keys = b.get_all_keys(prefix='level')
-print 'TEST 1'
+print('TEST 1')
 for key in keys:
-    print repr(key)
+    print(repr(key))
 
 keys = b.get_all_keys(max_keys=3)
-print 'TEST 2'
+print('TEST 2')
 for key in keys:
-    print repr(key)
+    print(repr(key))
