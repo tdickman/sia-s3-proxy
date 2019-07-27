@@ -1,9 +1,24 @@
 An s3 proxy for sia.
 
-# Setup
+# Running
+
+Replace `<sia_password>` with your sia api password.
+
+## Docker
+
+The `--network=host` parameter is optional, but likely required for most
+configurations.
 
 ```
+docker run --network=host -e SIA_PASSWORD=<sia_password> tdickman/sia-s3-proxy
+```
+
+## Local
+
+```
+pipenv shell
 pipenv install
+SIA_PASSWORD=<sia_password> python3 s3_proxy/main.py
 ```
 
 # Environtment Variables
