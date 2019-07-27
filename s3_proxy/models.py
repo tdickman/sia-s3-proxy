@@ -18,9 +18,11 @@ class BucketQuery(object):
 class S3Item(object):
     def __init__(self, key, **kwargs):
         self.key = key
-        self.content_type = kwargs['content_type']
+        if 'content_type' in kwargs:
+            self.content_type = kwargs['content_type']
         self.md5 = kwargs['md5']
-        self.size = kwargs['size']
+        if 'size' in kwargs:
+            self.size = kwargs['size']
         if 'creation_date' in kwargs:
             self.creation_date = kwargs['creation_date']
         if 'modified_date' in kwargs:

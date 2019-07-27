@@ -12,7 +12,7 @@ print('TEST 1')
 for key in keys:
     print(repr(key))
 
-keys = b.get_all_keys(max_keys=3)
+keys = b.get_all_keys(max_keys=10)
 print('TEST 2')
 for key in keys:
     print(repr(key))

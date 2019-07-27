@@ -9,6 +9,7 @@ from socketserver import ThreadingMixIn
 
 from s3_proxy.actions import delete_item, delete_items, get_acl, get_item, list_buckets, ls_bucket
 from s3_proxy.file_store import FileStore
+from s3_proxy.sia_store import SiaStore
 
 
 logging.basicConfig(level=logging.INFO)
@@ -208,15 +209,18 @@ def main(argv=sys.argv[1:]):
                         default=10001, type=int,
                         help='Port to run server on.')
     parser.add_argument('--root', dest='root', action='store',
-                        default='%s/s3store' % os.environ['HOME'],
-                        help='Defaults to $HOME/s3store.')
+                        default='s3',
+                        help='Defaults to s3/.')
+    parser.add_argument('--sia-password', dest='sia_password', action='store',
+                        help='Defaults to s3/.')
     parser.add_argument('--pull-from-aws', dest='pull_from_aws', action='store_true',
                         default=False,
                         help='Pull non-existent keys from aws.')
     args = parser.parse_args()
 
     server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
-    server.set_file_store(FileStore(args.root))
+    # server.set_file_store(FileStore(args.root))
+    server.set_file_store(SiaStore(args.root, sia_password=args.sia_password))
     server.set_mock_hostname(args.hostname)
     server.set_pull_from_aws(args.pull_from_aws)
 
