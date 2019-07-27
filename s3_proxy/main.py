@@ -197,7 +197,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def main(argv=sys.argv[1:]):
-    host = os.environ.get('HOST', 'localhost')
+    host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 10001))
     root = os.environ.get('ROOT', 's3')
     sia_password = os.environ.get('SIA_PASSWORD')
