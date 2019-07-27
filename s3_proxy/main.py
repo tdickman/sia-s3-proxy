@@ -218,7 +218,15 @@ def main(argv=sys.argv[1:]):
     server.set_mock_hostname(args.hostname)
 
     print('Starting server, use <Ctrl-C> to stop')
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        # Run an optional pre-exit function
+        pre_exit = getattr(server.file_store, '_pre_exit')
+        if pre_exit:
+            pre_exit()
+    finally:
+        server.server_close()
 
 
 if __name__ == '__main__':

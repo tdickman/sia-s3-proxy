@@ -1,6 +1,7 @@
 from datetime import datetime
 import hashlib
 import io
+import pickledb
 
 from .errors import BucketNotEmpty, NoSuchBucket, NoSuchKey
 from .models import Bucket, BucketQuery, S3Item
@@ -12,6 +13,19 @@ class SiaStore(object):
         self.sia = Sia(sia_password=sia_password)
         self.base_dir = base_dir
         self.buckets = self.get_all_buckets()
+        self.md5_cache = pickledb.load('md5-cache.db', False)
+
+    def _pre_exit(self):
+        self.md5_cache.dump()
+
+    def _md5(self, bucket_name, key):
+        """Get md5 from cache, otherwise retrieve file and recalculate."""
+        md5 = self.md5_cache.get(f'{bucket_name}/{key}')
+
+        if not md5:
+            md5 = self.get_item(bucket_name, key).md5
+
+        return md5
 
     def get_all_buckets(self):
         buckets = []
@@ -61,7 +75,9 @@ class SiaStore(object):
             self.sia.create_folder(key)
         else:
             self.sia.upload_file(key, data)
-        return S3Item(key, md5=m.hexdigest())
+            md5 = m.hexdigest()
+            self.md5_cache.set(f'{bucket.name}/{item_name}', md5)
+        return S3Item(item_name, md5=md5)
 
     def store_item(self, bucket, item_name, handler):
         size = int(handler.headers['content-length'])
@@ -77,9 +93,12 @@ class SiaStore(object):
 
         m = hashlib.md5()
         m.update(data)
+        md5 = m.hexdigest()
+        self.md5_cache.set(key, md5)
+
         item = S3Item(
             key,
-            md5=m.hexdigest(),
+            md5=md5,
             size=details['filesize'],
             modified_date=details['modtime'].rsplit('.')[0] + '.000Z',
             # Make up a content_type - this may break some clients
@@ -99,6 +118,7 @@ class SiaStore(object):
             self.sia.delete_file(path)
         except Exception:
             self.sia.delete_folder(path)
+        self.md5_cache.delete(f'{bucket_name}/{item_name}')
 
     def get_all_keys(self, bucket, **kwargs):
         max_keys = int(kwargs['max_keys'])
@@ -126,8 +146,7 @@ class SiaStore(object):
 
                 matches.append(S3Item(
                     key,
-                    # TODO: Fake md5 for now
-                    md5='098f6bcd4621d373cade4e832627b4f6',
+                    md5=self._md5(bucket.name, key),
                     modified_date=file_details['modtime'][:-10] + '000Z',
                     size=file_details['filesize'],
                 ))
