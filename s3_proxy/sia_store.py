@@ -4,7 +4,7 @@ import io
 import pickledb
 import time
 
-from .errors import BucketNotEmpty, NoSuchBucket, NoSuchKey
+from .errors import BucketNotEmpty, NoSuchBucket, NoSuchKey, HttpError
 from .models import Bucket, BucketQuery, S3Item
 from .sia import Sia
 
@@ -59,12 +59,12 @@ class SiaStore(object):
     def delete_bucket(self, bucket_name):
         bucket = self.get_bucket(bucket_name)
         if not bucket:
-            raise NoSuchBucket
+            raise NoSuchBucket()
 
         try:
             self.sia.delete_folder(f'{self.base_dir}/{bucket_name}')
         except:
-            raise BucketNotEmpty
+            raise BucketNotEmpty()
 
     def _block_until_uploaded(self, bucket_name, item_name, timeout_seconds=60):
         uploaded = False
@@ -82,13 +82,20 @@ class SiaStore(object):
         m.update(data)
         key = f'{self.base_dir}/{bucket.name}/{item_name}'
 
+        md5 = m.hexdigest()
+        self.md5_cache.set(f'{bucket.name}/{item_name}', md5)
+
         # Treat 0 byte files as folders (since that's how s3 treats folders)
         if len(data) == 0:
-            self.sia.create_folder(key)
+            try:
+                self.sia.create_folder(key)
+            except HttpError as e:
+                print(e, e.status_code)
+                # Directory already exists!
+                if e.status_code != 500:
+                    raise
         else:
             self.sia.upload_file(key, data)
-            md5 = m.hexdigest()
-            self.md5_cache.set(f'{bucket.name}/{item_name}', md5)
         return S3Item(item_name, md5=md5)
 
     def store_item(self, bucket, item_name, handler):
@@ -98,7 +105,12 @@ class SiaStore(object):
 
     def get_item(self, bucket_name, item_name):
         key = f'{bucket_name}/{item_name}'
-        (details, data) = self.sia.get_file(f'{self.base_dir}/{key}')
+        try:
+            (details, data) = self.sia.get_file(f'{self.base_dir}/{key}')
+        except HttpError as e:
+            if e.status_code == 400:
+                raise NoSuchKey()
+            raise
 
         if not details['available']:
             raise NoSuchKey()

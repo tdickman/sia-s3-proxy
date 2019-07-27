@@ -55,6 +55,15 @@ error_no_such_bucket_xml = '''\
   <RequestId>1</RequestId>
 </Error>'''
 
+error_no_such_key_xml = '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <Resource>{name}</Resource>
+  <RequestId>1</RequestId>
+</Error>'''
+
 acl_xml = '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01">

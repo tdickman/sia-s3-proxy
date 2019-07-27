@@ -1,4 +1,5 @@
 import requests
+from .errors import HttpError
 
 USER_AGENT = 'Sia-Agent'
 
@@ -19,7 +20,7 @@ class Sia(object):
         )
 
         if resp.status_code not in [200, 204]:
-            raise Exception(f'Error: {resp.status_code} - {resp.text}')
+            raise HttpError(resp.status_code, resp.text)
 
         return resp
 
@@ -49,7 +50,8 @@ class Sia(object):
         return self._request(f'/renter/file/{path}').json()['file']
 
     def get_file(self, path):
-        return self.get_file_status(path), self._request(f'/renter/stream/{path}').content
+        status = self.get_file_status(path)
+        return status, self._request(f'/renter/stream/{path}').content
 
     def delete_file(self, path):
         return self._request(

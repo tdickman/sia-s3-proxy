@@ -1,7 +1,8 @@
 import urllib.request, urllib.error, urllib.parse
 import datetime
 
-from s3_proxy import xml_templates
+from . import xml_templates
+from . import errors
 
 
 def list_buckets(handler):
@@ -25,7 +26,12 @@ def ls_bucket(handler, bucket_name, qs):
             'max_keys': qs.get('max-keys', [1000])[0],
             'delimiter': qs.get('delimiter', [''])[0],
         }
-        bucket_query = handler.server.file_store.get_all_keys(bucket, **kwargs)
+        try:
+            bucket_query = handler.server.file_store.get_all_keys(bucket, **kwargs)
+        except errors.NoSuchKey:
+            xml = xml_templates.error_no_such_key_xml.format(name='')
+            return _404(handler, xml)
+
         handler.send_response(200)
         handler.send_header('Content-Type', 'application/xml')
         handler.end_headers()
@@ -45,11 +51,8 @@ def ls_bucket(handler, bucket_name, qs):
         )
         handler.wfile.write(xml.encode())
     else:
-        handler.send_response(404)
-        handler.send_header('Content-Type', 'application/xml')
-        handler.end_headers()
         xml = xml_templates.error_no_such_bucket_xml.format(name=bucket_name)
-        handler.wfile.write(xml.encode())
+        return _404(hander, xml)
 
 
 def get_acl(handler):
@@ -59,11 +62,19 @@ def get_acl(handler):
     handler.wfile.write(xml_templates.acl_xml.encode())
 
 
+def _404(handler, xml):
+    handler.send_response(404)
+    handler.send_header('Content-Type', 'application/xml')
+    handler.end_headers()
+    handler.wfile.write(xml.encode())
+
+
 def get_item(handler, bucket_name, item_name):
-    item = handler.server.file_store.get_item(bucket_name, item_name)
-    if not item:
-        handler.send_response(404, '')
-        return
+    try:
+        item = handler.server.file_store.get_item(bucket_name, item_name)
+    except errors.NoSuchKey: 
+        xml = xml_templates.error_no_such_key_xml.format(name=item_name)
+        return _404(handler, xml)
 
     content_length = item.size
 

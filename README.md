@@ -25,6 +25,7 @@ SIA_PASSWORD=<sia_password> python3 s3_proxy/main.py
 
 | Key          | Default   | Description                                   |
 |--------------|-----------|-----------------------------------------------|
+| BIND         | 0.0.0.0   |                                               |
 | HOST         | localhost |                                               |
 | PORT         | 10001     |                                               |
 | ROOT         | s3        | Subdirectory to store everything under in sia |

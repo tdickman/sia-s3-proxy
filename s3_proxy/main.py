@@ -1,5 +1,6 @@
 import logging
 import os
+import ssl
 import sys
 import urllib.parse
 import xml.etree.ElementTree as ET
@@ -140,6 +141,7 @@ class S3Handler(BaseHTTPRequestHandler):
         req_type = None
 
         mock_hostname = self.server.mock_hostname
+        print(host)
         if host != mock_hostname and mock_hostname in host:
             idx = host.index(mock_hostname)
             bucket_name = host[:idx-1]
@@ -197,7 +199,9 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def main(argv=sys.argv[1:]):
-    host = os.environ.get('HOST', '0.0.0.0')
+    bind = os.environ.get('BIND', '0.0.0.0')
+    host = os.environ.get('HOST', 'localhost')
+    https = os.environ.get('HTTPS', 'false') == 'true'
     port = int(os.environ.get('PORT', 10001))
     root = os.environ.get('ROOT', 's3')
     sia_password = os.environ.get('SIA_PASSWORD')
@@ -205,7 +209,7 @@ def main(argv=sys.argv[1:]):
     sia_port = int(os.environ.get('SIA_PORT', 9980))
     cache_dir = os.environ.get('CACHE_DIR', './').rstrip('/')
 
-    server = ThreadedHTTPServer((host, port), S3Handler)
+    server = ThreadedHTTPServer((bind, port), S3Handler)
     # server.set_file_store(FileStore(args.root))
     server.set_file_store(SiaStore(
         root,
@@ -215,6 +219,12 @@ def main(argv=sys.argv[1:]):
         cache_dir=cache_dir,
     ))
     server.set_mock_hostname(host)
+    if https:
+        server.socket = ssl.wrap_socket(server.socket,
+            keyfile="/tmp/key.pem",
+            certfile="/tmp/cert.pem",
+            server_side=True
+        )
 
     print('Starting server, use <Ctrl-C> to stop')
     try:
