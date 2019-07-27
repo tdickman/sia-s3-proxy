@@ -211,7 +211,8 @@ def main(argv=sys.argv[1:]):
         root,
         host=sia_host,
         port=sia_port,
-        password=sia_password
+        password=sia_password,
+        cache_dir=cache_dir,
     ))
     server.set_mock_hostname(host)
 
