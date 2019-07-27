@@ -5,9 +5,10 @@ class Bucket(object):
 
 
 class BucketQuery(object):
-    def __init__(self, bucket, matches=[], is_truncated=False, **kwargs):
+    def __init__(self, bucket, matches=[], is_truncated=False, common_prefixes=[], **kwargs):
         self.bucket = bucket
         self.matches = matches
+        self.common_prefixes = common_prefixes
         self.is_truncated = is_truncated
         self.marker = kwargs['marker']
         self.prefix = kwargs['prefix']

@@ -30,9 +30,19 @@ def ls_bucket(handler, bucket_name, qs):
         handler.send_header('Content-Type', 'application/xml')
         handler.end_headers()
         contents = ''
+        common_prefixes = ''
+
         for s3_item in bucket_query.matches:
             contents += xml_templates.bucket_query_content_xml.format(s3_item=s3_item)
-        xml = xml_templates.bucket_query_xml.format(bucket_query=bucket_query, contents=contents)
+
+        for common_prefix in bucket_query.common_prefixes:
+            common_prefixes += xml_templates.common_prefixes_content_xml.format(prefix=common_prefix)
+
+        xml = xml_templates.bucket_query_xml.format(
+            bucket_query=bucket_query,
+            contents=contents,
+            common_prefixes=common_prefixes
+        )
         handler.wfile.write(xml.encode())
     else:
         handler.send_response(404)

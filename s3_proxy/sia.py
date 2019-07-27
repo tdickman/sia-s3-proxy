@@ -24,7 +24,8 @@ class Sia(object):
         return resp
 
     def list(self, path):
-        return self._request(f'/renter/dir/{path}/').json()
+        print(f'/renter/dir/{path}')
+        return self._request(f'/renter/dir/{path}').json()
 
     def create_folder(self, path):
         return self._request(

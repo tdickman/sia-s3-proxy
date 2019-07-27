@@ -90,20 +90,23 @@ class SiaStore(object):
     def get_all_keys(self, bucket, **kwargs):
         max_keys = int(kwargs['max_keys'])
         prefix = kwargs.get('prefix')
+        delimiter = kwargs.get('delimiter')
+        if delimiter not in set(['/', '']):
+            raise Exception('Delimiter only supports / or `` currently')
 
         is_truncated = False
         matches = []
-        directories_to_walk = [f'{bucket.name}']
+        common_prefixes = []
+        directories_to_walk = [f'{prefix}']
         walked_directories = set(directories_to_walk)
         
         while len(directories_to_walk) > 0:
             path = directories_to_walk.pop(-1)
-            results = self.sia.list(f'{self.base_dir}/{path}')
+
+            results = self.sia.list(f'{self.base_dir}/{bucket.name}/{path}')
 
             for file_details in results['files']:
                 key = file_details['siapath'].lstrip(f'{self.base_dir}/{bucket.name}')
-                if not key.startswith(prefix):
-                    continue
 
                 matches.append(S3Item(
                     key,
@@ -115,18 +118,22 @@ class SiaStore(object):
 
             for dir_details in results['directories']:
                 directory = dir_details['siapath']
-                path = directory.lstrip(f'{self.base_dir}/')
+                print(directory)
+                path = directory.lstrip(f'{self.base_dir}/{bucket.name}') + '/'
+                print("path: " + path)
 
-                if path in walked_directories or directory == self.base_dir:
+                if path in walked_directories or path == '/':
                     continue
-                
-                if path not in walked_directories:
-                    directories_to_walk.append(path)
 
-                walked_directories.add(path)
+                # Check for common prefixes
+                if delimiter == '/':
+                    common_prefixes.append(path)
+                elif path not in walked_directories:
+                    directories_to_walk.append(path)
+                    walked_directories.add(path)
 
             if len(matches) >= max_keys:
                 is_truncated = True
                 break
 
-        return BucketQuery(bucket, matches, is_truncated, **kwargs)
+        return BucketQuery(bucket, matches, is_truncated, common_prefixes, **kwargs)

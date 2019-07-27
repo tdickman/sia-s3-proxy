@@ -25,6 +25,7 @@ bucket_query_xml = '''\
   <MaxKeys>{bucket_query.max_keys}</MaxKeys>
   <IsTruncated>false</IsTruncated>
 {contents}
+{common_prefixes}
 </ListBucketResult>'''
 
 bucket_query_content_xml = '''\
@@ -39,6 +40,11 @@ bucket_query_content_xml = '''\
       <DisplayName>MockS3</DisplayName>
     </Owner>
   </Contents>'''
+
+common_prefixes_content_xml = '''\
+  <CommonPrefixes>
+    <Prefix>{prefix}</Prefix>
+  </CommonPrefixes>'''
 
 error_no_such_bucket_xml = '''\
 <?xml version="1.0" encoding="UTF-8"?>
