@@ -4,11 +4,11 @@ USER_AGENT = 'Sia-Agent'
 
 
 class Sia(object):
-    def __init__(self, host='127.0.0.1', port=9980, sia_password=None):
+    def __init__(self, host='127.0.0.1', port=9980, password=''):
         self.host = host
         self.port = port
         self.s = requests.Session()
-        self.s.auth = ("", sia_password)
+        self.s.auth = ("", password)
 
     def _request(self, path, action='get', **kwargs):
         func = getattr(self.s, action)

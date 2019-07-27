@@ -199,23 +199,22 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='A Mock-S3 server.')
-    parser.add_argument('--hostname', dest='hostname', action='store',
-                        default='localhost',
-                        help='Hostname to listen on.')
-    parser.add_argument('--port', dest='port', action='store',
-                        default=10001, type=int,
-                        help='Port to run server on.')
-    parser.add_argument('--root', dest='root', action='store',
-                        default='s3',
-                        help='Defaults to s3/.')
-    parser.add_argument('--sia-password', dest='sia_password', action='store',
-                        help='Defaults to s3/.')
-    args = parser.parse_args()
+    host = os.environ.get('HOST', 'localhost')
+    port = int(os.environ.get('PORT', 10001))
+    root = os.environ.get('ROOT', 's3')
+    sia_password = os.environ.get('SIA_PASSWORD')
+    sia_host = os.environ.get('SIA_HOST', 'localhost')
+    sia_port = int(os.environ.get('SIA_PORT', 9980))
 
-    server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
+    server = ThreadedHTTPServer((host, port), S3Handler)
     # server.set_file_store(FileStore(args.root))
-    server.set_file_store(SiaStore(args.root, sia_password=args.sia_password))
-    server.set_mock_hostname(args.hostname)
+    server.set_file_store(SiaStore(
+        root,
+        host=sia_host,
+        port=sia_port,
+        password=sia_password
+    ))
+    server.set_mock_hostname(host)
 
     print('Starting server, use <Ctrl-C> to stop')
     try:

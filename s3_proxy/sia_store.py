@@ -10,8 +10,8 @@ from .sia import Sia
 
 
 class SiaStore(object):
-    def __init__(self, base_dir, sia_password=None):
-        self.sia = Sia(sia_password=sia_password)
+    def __init__(self, base_dir, host='localhost', port=9980, password=''):
+        self.sia = Sia(host=host, port=port, password=password)
         self.base_dir = base_dir
         self.buckets = self.get_all_buckets()
         self.md5_cache = pickledb.load('md5-cache.db', False)
