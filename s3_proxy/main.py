@@ -218,7 +218,7 @@ def main(argv=sys.argv[1:]):
     print('Starting server, use <Ctrl-C> to stop')
     try:
         server.serve_forever()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         # Run an optional pre-exit function
         pre_exit = getattr(server.file_store, '_pre_exit')
         if pre_exit:
