@@ -4,6 +4,7 @@ import io
 import pickledb
 import time
 
+from .cache import Cache
 from .errors import BucketNotEmpty, NoSuchBucket, NoSuchKey, HttpError
 from .models import Bucket, BucketQuery, S3Item
 from .sia import Sia
@@ -15,15 +16,16 @@ class SiaStore(object):
         self.base_dir = base_dir
         self.buckets = self.get_all_buckets()
         self.md5_cache = pickledb.load(f'{cache_dir}/md5-cache.db', False)
+        self.file_cache = Cache(cache_dir=f'{cache_dir}/file_cache')
 
     def _pre_exit(self):
         self.md5_cache.dump()
 
-    def _md5(self, bucket_name, key):
+    def _md5(self, bucket_name, key, retrieve_on_miss=True):
         """Get md5 from cache, otherwise retrieve file and recalculate."""
         md5 = self.md5_cache.get(f'{bucket_name}/{key}')
 
-        if not md5:
+        if not md5 and retrieve_on_miss:
             md5 = self.get_item(bucket_name, key).md5
 
         return md5
@@ -86,16 +88,8 @@ class SiaStore(object):
         md5 = m.hexdigest()
         self.md5_cache.set(f'{bucket.name}/{item_name}', md5)
 
-        # Treat 0 byte files as folders (since that's how s3 treats folders)
-        if len(data) == 0:
-            try:
-                self.sia.create_folder(key)
-            except HttpError as e:
-                # Directory already exists!
-                if e.status_code != 500:
-                    raise
-        else:
-            self.sia.upload_file(key, data)
+        self.sia.upload_file(key, data)
+        self.file_cache.put(md5, data)
         return S3Item(item_name, md5=md5)
 
     def store_item(self, bucket, item_name, handler):
@@ -107,9 +101,13 @@ class SiaStore(object):
         key = f'{bucket_name}/{item_name}'
         data = b''
         try:
-            if content:
-                data = self.sia.get_file(f'{self.base_dir}/{key}')
             details = self.sia.get_file_status(f'{self.base_dir}/{key}')
+            if content:
+                md5 = self._md5(bucket_name, item_name, retrieve_on_miss=False)
+                if md5:
+                    data = self.file_cache.get(md5)
+                    if not data:
+                        data = self.sia.get_file(f'{self.base_dir}/{key}')
         except HttpError as e:
             if e.status_code == 400:
                 raise NoSuchKey()
@@ -132,6 +130,7 @@ class SiaStore(object):
             content_type='unknown',
         )
         item.io = io.BytesIO(data)
+        self.file_cache.put(md5, data)
 
         return item
 

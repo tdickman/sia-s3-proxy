@@ -52,7 +52,7 @@ def ls_bucket(handler, bucket_name, qs):
         handler.wfile.write(xml.encode())
     else:
         xml = xml_templates.error_no_such_bucket_xml.format(name=bucket_name)
-        return _404(hander, xml)
+        return _404(handler, xml)
 
 
 def get_acl(handler):
