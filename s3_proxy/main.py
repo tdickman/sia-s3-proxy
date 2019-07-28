@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class S3Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
+    def do_GET(self, content=True):
         parsed_path = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(parsed_path.query, True)
         host = self.headers['host'].split(':')[0]
@@ -59,7 +59,7 @@ class S3Handler(BaseHTTPRequestHandler):
             get_acl(self)
 
         elif req_type == 'get':
-            get_item(self, bucket_name, item_name)
+            get_item(self, bucket_name, item_name, content=content)
 
         else:
             self.wfile.write('%s: [%s] %s' % (req_type, bucket_name, item_name))
@@ -92,7 +92,7 @@ class S3Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_HEAD(self):
-        return self.do_GET()
+        return self.do_GET(content=False)
 
     def do_POST(self):
         parsed_path = urllib.parse.urlparse(self.path)

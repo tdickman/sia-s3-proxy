@@ -50,8 +50,7 @@ class Sia(object):
         return self._request(f'/renter/file/{path}').json()['file']
 
     def get_file(self, path):
-        status = self.get_file_status(path)
-        return status, self._request(f'/renter/stream/{path}').content
+        return self._request(f'/renter/stream/{path}').content
 
     def delete_file(self, path):
         return self._request(

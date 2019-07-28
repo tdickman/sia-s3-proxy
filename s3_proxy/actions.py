@@ -69,9 +69,9 @@ def _404(handler, xml):
     handler.wfile.write(xml.encode())
 
 
-def get_item(handler, bucket_name, item_name):
+def get_item(handler, bucket_name, item_name, content=True):
     try:
-        item = handler.server.file_store.get_item(bucket_name, item_name)
+        item = handler.server.file_store.get_item(bucket_name, item_name, content=content)
     except errors.NoSuchKey: 
         xml = xml_templates.error_no_such_key_xml.format(name=item_name)
         return _404(handler, xml)

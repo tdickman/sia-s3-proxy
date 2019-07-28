@@ -78,6 +78,7 @@ class SiaStore(object):
                 raise Exception("File failed to fully upload")
 
     def store_data(self, bucket, item_name, headers, data):
+        print(f'starting store for {item_name}')
         m = hashlib.md5()
         m.update(data)
         key = f'{self.base_dir}/{bucket.name}/{item_name}'
@@ -90,7 +91,6 @@ class SiaStore(object):
             try:
                 self.sia.create_folder(key)
             except HttpError as e:
-                print(e, e.status_code)
                 # Directory already exists!
                 if e.status_code != 500:
                     raise
@@ -103,10 +103,13 @@ class SiaStore(object):
         data = handler.rfile.read(size)
         return self.store_data(bucket, item_name, {}, data)
 
-    def get_item(self, bucket_name, item_name):
+    def get_item(self, bucket_name, item_name, content=True):
         key = f'{bucket_name}/{item_name}'
+        data = b''
         try:
-            (details, data) = self.sia.get_file(f'{self.base_dir}/{key}')
+            if content:
+                data = self.sia.get_file(f'{self.base_dir}/{key}')
+            details = self.sia.get_file_status(f'{self.base_dir}/{key}')
         except HttpError as e:
             if e.status_code == 400:
                 raise NoSuchKey()
